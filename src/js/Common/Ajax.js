@@ -12,6 +12,12 @@ class Ajax {
     return this
   }
 
+  openApi () {
+    this._options.url = 'https://ahacross.me/apis/openApi'
+    this._options.method = 'POST'
+    return this
+  }
+
   method (method) {
     this._options.method = method
     return this
@@ -54,11 +60,18 @@ class Ajax {
   }
 
   async run (fn) {
-    await this.promise().then((res) => {
-      fn(res.data)
-    }).catch((err) => {
-      console.error(err)
+    const result = await this.promise().then((res) => {
+      try {
+        if (res.$) {
+          return fn(res)
+        } else {
+          return fn(res.data)
+        }
+      } catch (err) {
+        console.error(err)
+      }
     })
+    return result
   }
 
   async promise () {
@@ -67,7 +80,7 @@ class Ajax {
       let data = res.data
 
       if (typeof data === 'string' && /xml/.test(data) && !/!DOCTYPE html/.test(data)) {
-        res.data = xmlConverter.xml2js(data, {compact: true, ignoreComment: true, spaces: 4, textKey: 'text'})
+        res.data = xmlConverter.xml2js(data, { compact: true, ignoreComment: true, spaces: 4, textKey: 'text' })
       } else if (/!DOCTYPE/.test(data)) {
         res.$ = cheerio.load(data)
       }
